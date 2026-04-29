@@ -1,6 +1,6 @@
 #!/bin/bash
 dl_path="/home/touchme/Downloads"
-cat << EOF
+cat << "EOF"
  ___,___,_______,____
 |  :::|///./||'||    \
 |  :::|//.//|| || H)  |

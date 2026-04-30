@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # --- Configuration ---
-video_path="/home/touchme/Videos/"
+video_path="$HOME/Videos/"
 
 # --- ASCII Header ---
 echo -e "${CYAN}${BOLD}"

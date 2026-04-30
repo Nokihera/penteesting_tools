@@ -10,7 +10,6 @@ NC='\033[0m'   # No Color
 trap 'echo -e "\n${R}Interrupted! Cleaning up...${NC}"; rm -f "$HOME/.mynotes/note.txt"; exit' SIGINT
 
 old_notes=""
-
 # Directory and File Check
 if [[ ! -d "$HOME/.mynotes" ]]; then
     echo -e "${C}Creating directory...${NC}"
@@ -28,31 +27,30 @@ echo -e "${C}${B}┃           SECURE ENCRYPTED NOTES             ┃${NC}"
 echo -e "${C}${B}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 
 if [[ -f $HOME/.mynotes/.config.txt ]]; then
-    gpg_id=$(cat $HOME/.mynotes/.config.txt)
+    gpg_id=$(cat "$HOME/.mynotes/.config.txt")
 else
     echo -e "\n${Y}${B}❯ Enter your GPG ID:${NC}"
-    read gpg_id
+    read -r gpg_id
     if [[ "$gpg_id" == "" ]]; then
         echo -e "${R}Error: GPG ID cannot be empty!${NC}"
         exit 1
     fi
-    echo "$gpg_id" > $HOME/.mynotes/.config.txt
+    echo "$gpg_id" > "$HOME/.mynotes/.config.txt"
     echo -e "${G}[✓] GPG ID saved to .config.txt${NC}"
 fi
 
 echo -e "\n${Y}${B}❯ Write your note below:${NC}"
-read note
+read -r note
 
 echo -e "\n${Y}${B}❯ Enter your GPG secret key:${NC}"
-read -s key
+read -r -s key
 echo -e "${G}[✓] Key received.${NC}"
 
 # --- Decrypting Logic ---
 if [[ -f "$HOME/.mynotes/note.txt.gpg" ]]; then
     echo -e "\n${C}Decrypting existing data...${NC}"
-    old_notes=$(gpg --batch --yes --passphrase "$key" --decrypt "$HOME/.mynotes/note.txt.gpg" 2>/dev/null)
     
-    if [[ ! $? == 0 ]]; then
+    if ! old_notes=$(gpg --batch --yes --pinentry-mode loopback --passphrase "$key" --decrypt "$HOME/.mynotes/note.txt.gpg" 2>/dev/null) ; then
         echo -e "\n${R}${B}ERROR: The password is wrong!${NC}"
         rm "$HOME/.mynotes/note.txt"
         exit 1
@@ -67,7 +65,7 @@ echo "$note" >> "$HOME/.mynotes/note.txt"
 
 gpg --batch --yes --encrypt --recipient "$gpg_id" "$HOME/.mynotes/note.txt"
 rm "$HOME/.mynotes/note.txt"
-
+gpgconf --kill gpg-agent
 # --- Success UI ---
 echo -e "\n${G}${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${G}${B}       DONE! Your note is now secure.        ${NC}"

@@ -47,9 +47,9 @@ echo -e "${BLUE}─────────────────────�
 # --- Input Phase ---
 mkdir -p ~/outputfiles/
 echo -en "${YELLOW}${BOLD}[?] Enter target machine (IP/Domain): ${NC}"
-read target
+read -r target
 echo -en "${YELLOW}${BOLD}[?] Enter output file name: ${NC}"
-read output
+read -r output
 
 output_path="$HOME/outputfiles/$output"
 detailed_output="${output_path}_detailed.txt"
@@ -84,10 +84,10 @@ web_ports=$(grep -E "^[0-9]+/tcp.*open.*http" "$detailed_output" | cut -d'/' -f1
 
 if [ ! -z "$web_ports" ]; then
     echo -e "${PURPLE}${BOLD}────────────────────────────────────────────────${NC}"
-    print_success "Web services found on port(s): ${GREEN}$(echo $web_ports | tr '\n' ' ')${NC}"
+    print_success "Web services found on port(s): ${GREEN}$(echo "$web_ports" | tr '\n' ' ')${NC}"
     
     echo -en "${YELLOW}${BOLD}[?] Enter path to your Wordlist: ${NC}"
-    read wordlist_path
+    read -r wordlist_path
 
     if [ ! -f "$wordlist_path" ]; then
         print_error "Wordlist file not found! Skipping Gobuster."

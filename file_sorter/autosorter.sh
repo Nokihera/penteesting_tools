@@ -37,23 +37,23 @@ show_progress() {
     local duration=$1
     local label=$2
     echo -ne "${BLUE}[-] $label... ${NC}"
-    sleep $duration
+    sleep "$duration"
     echo -e "${GREEN}Done!${NC}"
 }
 
 # 1. Image Sorting
-mv $dl_path/*.jpg $dl_path/*.png $HOME/Pictures 2>/dev/null
+mv "$dl_path"/*.jpg "$dl_path"/*.png "$HOME/Pictures" 2>/dev/null
 echo -ne "${GREEN}######                    (33%)${NC}\r"
 sleep 0.1
 
 # 2. Document & Video Sorting
-mv $dl_path/*.pdf $dl_path/*.txt $HOME/Documents 2>/dev/null
-mv $dl_path/*.mp4 $HOME/Videos 2>/dev/null
+mv "$dl_path"/*.pdf "$dl_path"/*.txt "$HOME/Documents" 2>/dev/null
+mv "$dl_path"/*.mp4 "$HOME/Videos" 2>/dev/null
 echo -ne "${GREEN}############              (66%)${NC}\r"
 sleep 0.1
 
 # 3. Music Sorting
-mv $dl_path/*.mp3 $dl_path/*.flac $HOME/Music 2>/dev/null
+mv "$dl_path"/*.mp3 "$dl_path"/*.flac "$HOME/Music" 2>/dev/null
 echo -ne "${GREEN}#######################   (100%)${NC}\r"
 echo -ne '\n'
 

@@ -4,7 +4,6 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
@@ -41,13 +40,13 @@ echo -e "  ${CYAN}(2)${NC} Python     ${CYAN}(5)${NC} Lua"
 echo -e "  ${CYAN}(3)${NC} Netcat     ${CYAN}(6)${NC} Busybox"
 
 echo -ne "\n${YELLOW}${BOLD}Choose a type [1-6]: ${NC}"
-read type
+read -r type
 
 echo -ne "${YELLOW}${BOLD}Enter LHOST (Your IP): ${NC}"
-read ip_address
+read -r ip_address
 
 echo -ne "${YELLOW}${BOLD}Enter LPORT (Your Port): ${NC}"
-read port
+read -r port
 
 # --- Validation ---
 if [[ -z "$ip_address" || -z "$port" ]]; then
@@ -57,7 +56,6 @@ fi
 
 # --- Payload Generation ---
 intro="REVERSE SHELL PAYLOAD"
-listener="LISTENER PREVIEW"
 
 print_section "$intro"
 
@@ -95,6 +93,6 @@ echo -e "${YELLOW}Payload is ready. To catch the shell, run:${NC}"
 echo -e "${RED}${BOLD}nc -lvnp $port${NC}"
 
 echo -ne "\n${CYAN}Press [Enter] to start listening now...${NC}"
-read
+read -r
 echo -e "${GREEN}Starting listener on $port...${NC}"
-nc -lvnp $port
+nc -lvnp "$port"

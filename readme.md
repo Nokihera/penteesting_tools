@@ -1,7 +1,7 @@
 ## 👤 Author
 
 **Min Zar Ni Htut (touchme)**
-- **TryHackMe**: Wizard (Level 11) | Top 10 National Rank in Myanmar (April 2026).
+- **TryHackMe**: Master (Level 11) | Top 10 National Rank in Myanmar (April 2026).
 - **Specialization**: Cybersecurity Research, Linux Automation, and Penetration Testing.
 - **GitHub**: [@Nokihera](https://github.com/Nokihera)
 

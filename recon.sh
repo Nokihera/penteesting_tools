@@ -10,18 +10,10 @@ CYAN='\033[0;36m'
 NC='\033[0m' 
 BOLD='\033[1m'
 
-# --- Helper Function for Headers ---
-print_status() {
-    echo -e "\n${BLUE}[${CYAN}*${BLUE}] ${BOLD}$1${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}[${BOLD}✓${NC}${GREEN}] $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}[${BOLD}!${NC}${RED}] $1${NC}"
-}
+# --- Helper Functions ---
+print_status() { echo -e "\n${BLUE}[${CYAN}*${BLUE}] ${BOLD}$1${NC}"; }
+print_success() { echo -e "${GREEN}[${BOLD}✓${NC}${GREEN}] $1${NC}"; }
+print_error() { echo -e "${RED}[${BOLD}!${NC}${RED}] $1${NC}"; }
 
 # --- Banner Phase ---
 clear
@@ -49,12 +41,11 @@ cat << "EOF"
    `:::::`::::::::;' /  / `:#                   
     ::::::`:::::;'  /  /   `#                   
 EOF
-echo -e "${CYAN}        [+] TOUCHME RECON TOOL v1.2${NC}"
+echo -e "${CYAN}        [+] TOUCHME RECON TOOL v1.4 (Fixed Logic)${NC}"
 echo -e "${BLUE}────────────────────────────────────────────────${NC}"
 
-# --- Logic Phase ---
+# --- Input Phase ---
 mkdir -p ~/outputfiles/
-
 echo -en "${YELLOW}${BOLD}[?] Enter target machine (IP/Domain): ${NC}"
 read target
 echo -en "${YELLOW}${BOLD}[?] Enter output file name: ${NC}"
@@ -63,11 +54,14 @@ read output
 output_path="$HOME/outputfiles/$output"
 detailed_output="${output_path}_detailed.txt"
 
-# Step 1: Fast Scan
+# --- Step 1: Fast Scan & Port Extraction ---
 print_status "Step 1: Discovering Open Ports on $target (Fast Scan)..."
-sudo nmap -p- --min-rate 5000 "$target" -oG - | grep "open" > /tmp/nmap_tmp
 
-ports=$(grep "Ports:" /tmp/nmap_tmp | sed 's/.*Ports: //' | sed 's/\/tcp//g' | cut -d',' -f1 | tr -d ' ' | tr '\n' ',' | sed 's/,$//')
+# Grepable output ကို အသုံးပြု၍ port များကို ရှာဖွေခြင်း
+sudo nmap -p- --min-rate 5000 "$target" -oG /tmp/nmap_tmp
+
+# Regex logic ဖြင့် port နံပါတ်များကိုသာ သန့်စင်စွာ ဆွဲထုတ်ခြင်း
+ports=$(grep "Ports:" /tmp/nmap_tmp | awk -F'Ports: ' '{print $2}' | grep -oP '\d+(?=/open/tcp)' | tr '\n' ',' | sed 's/,$//')
 
 if [ -z "$ports" ]; then
     print_error "No open ports found. Terminating scan."
@@ -76,15 +70,17 @@ fi
 
 print_success "Open ports detected: ${PURPLE}${BOLD}$ports${NC}"
 
-# Step 2: Detailed Scan
+# --- Step 2: Detailed Scan ---
 print_status "Step 2: Performing Deep Service Enumeration (-A)..."
 echo -e "${YELLOW}Running: nmap -A -p $ports $target${NC}"
 sudo nmap -A -p "$ports" "$target" -T4 -oN "$detailed_output"
-print_success "Detailed scan saved to: ${WHITE}$detailed_output${NC}"
+print_success "Detailed scan saved to: $detailed_output"
 
-# Step 3: Intelligent Web Port Detection
+# --- Step 3: Web Port Detection & Gobuster ---
 print_status "Step 3: Analyzing results for Web Services..."
-web_ports=$(grep -E "^[0-9]+/tcp.*open.*(http|ssl/http)" "$detailed_output" | cut -d'/' -f1 | sort -u)
+
+# Regex သုံး၍ port lines များကိုသာ တိကျစွာ ခွဲထုတ်ခြင်း (http သို့မဟုတ် ssl/http)
+web_ports=$(grep -E "^[0-9]+/tcp.*open.*http" "$detailed_output" | cut -d'/' -f1 | sort -u)
 
 if [ ! -z "$web_ports" ]; then
     echo -e "${PURPLE}${BOLD}────────────────────────────────────────────────${NC}"
@@ -94,14 +90,17 @@ if [ ! -z "$web_ports" ]; then
     read wordlist_path
 
     if [ ! -f "$wordlist_path" ]; then
-        print_error "Wordlist not found! Skipping Directory Brute-force."
+        print_error "Wordlist file not found! Skipping Gobuster."
     else
         for port in $web_ports; do
             print_status "Launching Gobuster on port $port..."
             gobuster_output="${output_path}_gobuster_port_${port}.txt"
 
+            # Protocol (http/https) ကို သေချာစွာ စစ်ဆေးခြင်း
             protocol="http"
-            [ "$port" == "443" ] && protocol="https"
+            if grep -E "^$port/tcp.*open.*ssl/http" "$detailed_output" > /dev/null; then
+                protocol="https"
+            fi
 
             gobuster dir -u "$protocol://$target:$port" -w "$wordlist_path" -o "$gobuster_output" -t 30 -k
             print_success "Port $port brute-force completed. Results: $gobuster_output"

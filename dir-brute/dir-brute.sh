@@ -18,7 +18,7 @@ read -r target
 echo -e "${YELLOW}[?] Type your wordlist path:${NC}"
 read -r wordlist
 
-trap "echo -e '\n${RED}[!] User Interrupted, Exiting....${NC}'; exit 1" SIGINT
+trap 'echo -e "\n${RED}[!] User Interrupted, Exiting....${NC}"; exit 1' SIGINT
 
 # URL formatting (သင်ရေးထားတဲ့ logic အတိုင်းပဲ slash ထည့်တာပါ)
 if [[ ! "$target" == */ ]]; then
@@ -37,14 +37,14 @@ echo -e "${BLUE}---------------------------------------${NC}"
 
 while IFS= read -r word; do
     # Logic အပိုင်းကို လုံးဝမပြောင်းလဲထားပါ
-    response=$(curl -s -I $target$word | sed -n "1p"| cut -d " " -f 2)
+    response=$(curl -s -I "$target$word" | sed -n "1p"| cut -d " " -f 2)
     
     if [[ "$response" != "404" && "$response" != "" ]]; then
         # 200 OK ဖြစ်ရင် စာကြောင်းအသစ်နဲ့ အစိမ်းရောင်ပြမယ်
         echo -e "\n${GREEN}[+] Found: $word ($response)${NC}"
-        let "line_count++"
+        (( line_count++ )) || true
     else
-        let "line_count++"
+        (( line_count++ )) || true
         # 200 မဟုတ်ရင် စာကြောင်းတစ်ကြောင်းတည်းမှာတင် counter တိုးပြမယ်
         echo -ne "${YELLOW}[*] Scanning: $line_count ($word)\e[K${NC}\r"
     fi

@@ -9,7 +9,7 @@ BLUE='\e[1;34m'
 CYAN='\e[1;36m'
 NC='\e[0m' # No Color (အရောင်ပြန်ဖျက်ရန်)
 
-if (( $EUID != 0 )); then
+if (( EUID != 0 )); then
     echo -e "${RED}YOU NEED TO RUN THIS SCRIPT AS ROOT!${NC}"
     exit 1
 fi

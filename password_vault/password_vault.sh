@@ -28,7 +28,7 @@ EOF
     fi
     echo -e "\n[+] Decrypting your password file...\n"
 
-    # Header လှလှလေးပြမယ်။ ပြီးရင် : ကို အခြေခံပြီး Table Format ညှိပေးမယ့် column command သုံးထားတယ်
+    # Header ပြပြီး : ကို အခြေခံကာ Table Format ညှိပေးမယ့် column command သုံးထားတယ်
     (
       echo "SERVICE:USERNAME:PASSWORD"
       gpg -q -d "$password_file"
@@ -46,9 +46,7 @@ EOF
 
     if [[ -f $password_file ]]; then
       if gpg -q -d "$password_file" >"$temp_password_file"; then
-        # Service:Username:Password ပုံစံနဲ့ Append လုပ်မယ်
         echo "${service}:${username}:${password}" >>"$temp_password_file"
-        rm "$password_file"
       else
         echo -e "[-] You've entered wrong passphrase..."
         read -r
@@ -58,11 +56,13 @@ EOF
       echo "${service}:${username}:${password}" >"$temp_password_file"
     fi
 
-    if gpg -o "$password_file" -c "$temp_password_file"; then
-      rm "$temp_password_file"
+    # --yes သုံးပြီး gpg အသစ်အောင်မြင်မှ အဟောင်းကို overwrite လုပ်မယ်
+    if gpg --yes -o "$password_file" -c "$temp_password_file"; then
+      shred -u -n 5 "$temp_password_file"
       echo -e "\n[+] Password has been successfully saved..."
     else
       echo -e "\n[-] Encryption failed..."
+      if [[ -f $temp_password_file ]]; then shred -u -n 5 "$temp_password_file"; fi
     fi
     read -r
     ;;
@@ -76,23 +76,20 @@ EOF
     read -r -p "Enter the Service name to DELETE: " del_target
 
     if gpg -q -d "$password_file" >"$temp_password_file"; then
-      # target ပါတဲ့ စာကြောင်းရှိမရှိ စစ်မယ်
       if ! grep -q "^${del_target}:" "$temp_password_file"; then
         echo -e "\n[-] Service not found!"
-        rm "$temp_password_file"
+        shred -u -n 5 "$temp_password_file"
         read -r
         continue
       fi
 
-      # grep -v သုံးပြီး အဲဒီ service ကလွဲလို့ ကျန်တာကို ဖိုင်အသစ်ထဲ ပြန်ရေးမယ်
       grep -v "^${del_target}:" "$temp_password_file" >"${temp_password_file}.tmp"
       mv "${temp_password_file}.tmp" "$temp_password_file"
 
-      rm "$password_file"
-      if gpg -o "$password_file" -c "$temp_password_file"; then
+      if gpg --yes -o "$password_file" -c "$temp_password_file"; then
         echo -e "\n[+] Password deleted successfully!"
       fi
-      rm "$temp_password_file"
+      shred -u -n 5 "$temp_password_file"
     else
       echo -e "[-] Wrong passphrase..."
     fi
@@ -110,27 +107,24 @@ EOF
     if gpg -q -d "$password_file" >"$temp_password_file"; then
       if ! grep -q "^${edit_target}:" "$temp_password_file"; then
         echo -e "\n[-] Service not found!"
-        rm "$temp_password_file"
+        shred -u -n 5 "$temp_password_file"
         read -r
         continue
       fi
 
-      # အသစ်ထည့်မယ့် Data တောင်းမယ်
       echo -e "\nEnter NEW details for $edit_target:"
       read -r -p "New Username: " new_user
       read -s -r -p "New Password: " new_pass
       echo ""
 
-      # အဟောင်းကို ဖျက်ပြီး အသစ်ကို တစ်ခါတည်း တွဲထည့်မယ်
       grep -v "^${edit_target}:" "$temp_password_file" >"${temp_password_file}.tmp"
       echo "${edit_target}:${new_user}:${new_pass}" >>"${temp_password_file}.tmp"
       mv "${temp_password_file}.tmp" "$temp_password_file"
 
-      rm "$password_file"
-      if gpg -o "$password_file" -c "$temp_password_file"; then
+      if gpg --yes -o "$password_file" -c "$temp_password_file"; then
         echo -e "\n[+] Password updated successfully!"
       fi
-      rm "$temp_password_file"
+      shred -u -n 5 "$temp_password_file"
     else
       echo -e "[-] Wrong passphrase..."
     fi
@@ -147,21 +141,21 @@ EOF
     if [[ -d "$working_dir/.git" ]]; then
       date=$(date +"%Y-%m-%d,%H:%M")
       echo -e "\n[+] Syncronizing your git repo..."
-      cd "$working_dir" # cd ဝင်ဖို့ လိုပါတယ်
-      git pull
+      cd "$working_dir"
+      git pull origin main 2>/dev/null || git pull
       git add .
       git commit -m "Date: $date"
-      git push
+      git push origin main 2>/dev/null || git push
       echo -e "\n[+] Syncronizing complete..."
     else
       date=$(date +"%Y-%m-%d,%H:%M")
-      read -r -p "Add your git repo: " git_repo
+      read -r -p "Add your git repo URL: " git_repo
       echo -e "\n[+] Initiating your git..."
       cd "$working_dir"
       git init
       git add .
-      git commit -m "$date"
-      git remote add origin "$git_repo" # main မဟုတ်ဘဲ standard အတိုင်း origin ပြောင်းပေးထားတယ်
+      git commit -m "Initial commit: $date"
+      git remote add origin "$git_repo"
       git branch -M main
       git push -u origin main
       echo -e "\n[+] Syncronizing complete..."

